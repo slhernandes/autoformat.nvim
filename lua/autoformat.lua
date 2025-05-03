@@ -7,10 +7,10 @@ local function mark_wrap(f)
     local cur_col = vim.api.nvim_exec2("echo col(\".\")", {output = true})
                         .output or "0"
     f()
-    if vim.v.shell_error > 0 then
-      print("Error occured, undo.")
-      vim.cmd [[undo]]
-    end
+    -- if vim.v.shell_error > 0 then
+    --   print("Error occured, undo.")
+    --   vim.cmd [[undo]]
+    -- end
     local lc = vim.api.nvim_buf_line_count(0)
     local cur_line_num = tonumber(cur_line) or 1
     if lc >= cur_line_num then
@@ -27,6 +27,7 @@ function M.setup(opts)
       force = false,
       filetype = "lua",
       marker = {".stylua.toml"},
+
       format = function()
         vim.cmd([[silent exec "%!lua-format --indent-width=2"]])
       end
@@ -91,7 +92,13 @@ function M.setup(opts)
                 group = vim.api.nvim_create_augroup(vim.bo.filetype ..
                                                         'formatter', {}),
                 buffer = args.buf,
-                callback = function() mark_wrap(v.format)() end
+                callback = function()
+                  mark_wrap(v.format)()
+                  if vim.v.shell_error > 0 then
+                    print("Error occured, undo.")
+                    vim.cmd [[undo]]
+                  end
+                end
               })
             end
           end
@@ -133,3 +140,4 @@ function M.setup(opts)
   })
 
 end
+return M
