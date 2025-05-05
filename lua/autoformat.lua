@@ -122,7 +122,6 @@ function M.setup(opts)
       local autoformat = lsp_autoformat and
           (not ft_info.force or
             vim.fs.root(0, ft_info.marker or {}) ~= nil)
-      print("lsp marker: " .. tostring(vim.fs.root(0, ft_info.marker or {})))
       if autoformat then
         add_keymap(M.keymaps, "format", vim.lsp.buf.format)
 
