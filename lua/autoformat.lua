@@ -2,7 +2,7 @@ local M = {}
 
 local default_override = {
   lua_ls = {
-    force = true,
+    force = false,
     filetype = "lua",
     marker = {".stylua.toml"},
 
@@ -90,7 +90,7 @@ local function lsp_autoformat(args)
     add_keymap(M.keymaps, "format", vim.lsp.buf.format)
 
     if (tonumber(vim.fn.system({'wc', '-l', vim.fn.expand('%')}):match('%d+')) or
-        0) <= 1000 then
+        0) <= M.maxloc then
       vim.api.nvim_create_autocmd('BufWritePre', {
         group = vim.api.nvim_create_augroup('lspformatter', {clear = false}),
         buffer = args.buf,
@@ -114,7 +114,7 @@ local function non_lsp_autoformat(args)
       add_keymap(M.keymaps, "format", v.format)
       local autoformat = (tonumber(vim.fn.system({
         'wc', '-l', vim.fn.expand('%')
-      }):match('%d+')) or 0) <= 1000
+      }):match('%d+')) or 0) <= M.maxloc
       if autoformat then
         vim.api.nvim_create_autocmd('BufWritePre', {
           group = vim.api
@@ -165,7 +165,8 @@ end
 function M.setup(opts)
   M.override = opts.override or default_override
   M.keymaps = opts.keymaps or default_keymaps
-  M.enabled = true
+  M.enabled = opts.enabled or true
+  M.maxloc = opts.maxloc or 1000
   init_autocmds()
   vim.api.nvim_create_user_command("AutoformatToggle", function()
     if M.enabled then
