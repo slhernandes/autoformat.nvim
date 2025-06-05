@@ -4,7 +4,7 @@ local default_override = {
   lua_ls = {
     force = false,
     filetype = "lua",
-    marker = {".stylua.toml"},
+    marker = { ".stylua.toml" },
 
     format = function()
       vim.cmd([[silent exec "%!lua-format --indent-width=2"]])
@@ -13,7 +13,7 @@ local default_override = {
   ocaml_lsp = {
     force = false,
     filetype = "ocaml",
-    marker = {".ocamlformat"},
+    marker = { ".ocamlformat" },
     format = function()
       local format_cmd = "%!ocamlformat -"
       format_cmd = format_cmd .. " --enable-outside-detected-project"
@@ -28,19 +28,19 @@ local default_override = {
   },
   bashls = {
     force = true,
-    filetype = {"bash", "sh", "zsh"},
-    format = function() vim.cmd([[silent exec "%!beautysh -i 2 -"]]) end
+    filetype = { "bash", "sh", "zsh" },
+    format = function() vim.cmd([[silent exec "%!shfmt -i 2 -bn -ci -sr"]]) end
   }
 }
 
-local default_keymaps = {format = "<leader>fc"}
+local default_keymaps = { format = "<leader>fc" }
 
 local function mark_wrap(f)
   return function()
-    local cur_line = vim.api.nvim_exec2("echo line(\".\")", {output = true})
-                         .output or "1"
-    local cur_col = vim.api.nvim_exec2("echo col(\".\")", {output = true})
-                        .output or "0"
+    local cur_line = vim.api.nvim_exec2("echo line(\".\")", { output = true })
+        .output or "1"
+    local cur_col = vim.api.nvim_exec2("echo col(\".\")", { output = true })
+        .output or "0"
     f()
     local lc = vim.api.nvim_buf_line_count(0)
     local cur_line_num = tonumber(cur_line) or 1
@@ -55,7 +55,7 @@ end
 local function add_keymap(keymaps, key, func)
   local keymap = keymaps[key] or default_keymaps[key]
   if keymap == "" then keymap = default_keymaps[key] end
-  vim.keymap.set({"n", "v"}, keymap, mark_wrap(func))
+  vim.keymap.set({ "n", "v" }, keymap, mark_wrap(func))
 end
 
 local function check_ft(in_ft, data)
@@ -76,23 +76,23 @@ local function check_ft(in_ft, data)
 end
 
 local function lsp_autoformat(args)
-  local client = vim.lsp.get_clients({bufnr = args.buf})[1]
+  local client = vim.lsp.get_clients({ bufnr = args.buf })[1]
   if client == nil then return end
   local lsp_autoformat_capability = not client:supports_method(
-                                        'textDocument/willSaveWaitUntil') and
-                                        client:supports_method(
-                                            'textDocument/formatting')
-  local ft_info = M.override[client.name] or {force = false}
+        'textDocument/willSaveWaitUntil') and
+      client:supports_method(
+        'textDocument/formatting')
+  local ft_info = M.override[client.name] or { force = false }
   local autoformat = lsp_autoformat_capability and
-                         (not ft_info.force or
-                             vim.fs.root(0, ft_info.marker or {}) ~= nil)
+      (not ft_info.force or
+        vim.fs.root(0, ft_info.marker or {}) ~= nil)
   if autoformat then
     add_keymap(M.keymaps, "format", vim.lsp.buf.format)
 
-    if (tonumber(vim.fn.system({'wc', '-l', vim.fn.expand('%')}):match('%d+')) or
-        0) <= M.maxloc then
+    if (tonumber(vim.fn.system({ 'wc', '-l', vim.fn.expand('%') }):match('%d+')) or
+          0) <= M.maxloc then
       vim.api.nvim_create_autocmd('BufWritePre', {
-        group = vim.api.nvim_create_augroup('lspformatter', {clear = false}),
+        group = vim.api.nvim_create_augroup('lspformatter', { clear = false }),
         buffer = args.buf,
         callback = function()
           vim.lsp.buf.format({
@@ -136,12 +136,12 @@ end
 local function init_autocmds()
   vim.api.nvim_create_autocmd("BufEnter", {
     desc = "Autoformatting for buffer without LSP",
-    group = vim.api.nvim_create_augroup('autoformatter', {clear = false}),
+    group = vim.api.nvim_create_augroup('autoformatter', { clear = false }),
     callback = function(args) non_lsp_autoformat(args) end
   })
 
   vim.api.nvim_create_autocmd('LspAttach', {
-    group = vim.api.nvim_create_augroup('autoformatter', {clear = false}),
+    group = vim.api.nvim_create_augroup('autoformatter', { clear = false }),
     callback = function(args)
       lsp_autoformat(args)
       M.lsp_data = args.data
@@ -153,7 +153,7 @@ local function delete_autocmds()
   vim.api.nvim_del_augroup_by_name("autoformatter")
   local ag_non_lsp = vim.bo.filetype .. 'formatter'
   local ag_lsp = 'lspformatter'
-  local augroups = vim.api.nvim_exec2("augroup", {output = true}).output or ""
+  local augroups = vim.api.nvim_exec2("augroup", { output = true }).output or ""
   if augroups:gmatch(ag_non_lsp)() ~= nil then
     vim.api.nvim_del_augroup_by_name(vim.bo.filetype .. 'formatter')
   end
@@ -173,8 +173,8 @@ function M.setup(opts)
       delete_autocmds()
       M.enabled = false
     else
-      lsp_autoformat({buf = 0, data = M.lsp_data})
-      non_lsp_autoformat({buf = 0})
+      lsp_autoformat({ buf = 0, data = M.lsp_data })
+      non_lsp_autoformat({ buf = 0 })
       M.enabled = true
     end
   end, {})
